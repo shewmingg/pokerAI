@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Basic Texas Hold'em Poker</title>
+    <style>
+        #table {
+            width: 100%;
+            height: 400px;
+            position: relative;
+            border: 1px solid black;
+            border-radius: 5px;
+        }
+
+        .card {
+            width: 60px;
+            height: 80px;
+            position: absolute;
+            background-color: white;
+            border: 1px solid black;
+            border-radius: 5px;
+        }
+
+        #card1 {
+            left: 20%;
+        }
+
+        #card2 {
+            left: 30%;
+        }
+
+        #btnCheck, #btnCall, #btnRaise {
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+<div id="table">
+    <div id="card1" class="card"></div>
+    <div id="card2" class="card"></div>
+</div>
+
+<button id="btnCheck">Check</button>
+<button id="btnCall">Call</button>
+<button id="btnRaise">Raise</button>
+
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script>
+    $(function() {
+        // Set up some basic event listeners
+        $('#btnCheck').click(function() {
+            console.log('Player checks');
+            // Do something here
+        });
+
+        $('#btnCall').click(function() {
+            console.log('Player calls');
+            // Do something here
+        });
+
+        $('#btnRaise').click(function() {
+            console.log('Player raises');
+            // Do something here
+        });
+    });
+</script>
+</body>
+</html>
