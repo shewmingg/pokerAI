@@ -25,24 +25,36 @@ func main() {
 	// determine which input will be used, (strategy pattern
 	input := &inputDto.WePokerInput{}
 	input.Init()
-	for {
-		ctx, cancel := context.WithCancel(context.Background())
-		input.NewContext(ctx)
-		table := poker.NewTable()
-		table.TableSize = input.GetTableSize()
-		table.MyCard = input.GetSelfCard()
-		fmt.Printf("%s %s\n", table.MyCard[0], table.MyCard[1])
-		wg.Add(1)
-		go routine(ctx, &wg, routineNum, &table, input, cancel)
+	_, restart := interface{}(input).(inputDto.WithRestart)
+	if restart {
+		// 如果有重启机制就要监听并等待重启
+		for {
+			ctx, cancel := context.WithCancel(context.Background())
+			input.NewContext(ctx)
+			table := poker.NewTable()
+			table.TableSize = input.GetTableSize()
+			table.MyCard = input.GetSelfCard()
+			fmt.Printf("%s %s\n", table.MyCard[0], table.MyCard[1])
+			wg.Add(1)
+			go routine(ctx, &wg, routineNum, &table, input, cancel)
 
-		wg.Add(1)
-		go monitor(ctx, cancel, &wg, input, &table)
+			wg.Add(1)
+			go monitor(ctx, cancel, &wg, input, &table)
 
-		wg.Wait()
+			wg.Wait()
 
-		// After first routine is cancelled, start it again
-		routineNum++
+			// After first routine is cancelled, start it again
+			routineNum++
+		}
+	} else {
+		for {
+			table := poker.NewTable()
+			table.TableSize = input.GetTableSize()
+			table.MyCard = input.GetSelfCard()
+			NewGame(&table, input)
+		}
 	}
+
 }
 
 func preflopSetup(table *poker.Table, input inputDto.InputInterface) {
@@ -75,13 +87,14 @@ func preflopSetup(table *poker.Table, input inputDto.InputInterface) {
 }
 
 func NewGame(table *poker.Table, input inputDto.InputInterface) {
+	restartImp, restart := interface{}(input).(inputDto.WithRestart)
 	table.Dealer = input.GetDealer()
-	if input.CheckExit() {
+	if restart && restartImp.CheckExit() {
 		return
 	}
 	fmt.Printf("dealer is %d\n", table.Dealer)
 	table.Players = input.InitPlayerWithChips(table.Players, table.TableSize)
-	if input.CheckExit() {
+	if restart && restartImp.CheckExit() {
 		return
 	}
 	table.BetSize = input.GetBetSize()
@@ -89,11 +102,11 @@ func NewGame(table *poker.Table, input inputDto.InputInterface) {
 	table.Round = poker.NewRound(poker.Preflop, table.PreviousValidPosition(table.NextValidPosition(table.Dealer)), table.NextValidPosition(table.Dealer), table.TableSize)
 	preflopSetup(table, input)
 	input.Betting(table)
-	if input.CheckExit() {
+	if restart && restartImp.CheckExit() {
 		return
 	}
 	flopCards := input.GetFlopCards()
-	if input.CheckExit() {
+	if restart && restartImp.CheckExit() {
 		wrapUp(*table)
 		return
 	}
@@ -102,13 +115,13 @@ func NewGame(table *poker.Table, input inputDto.InputInterface) {
 	table.TableCard[2] = flopCards[2]
 	table.Round = poker.NewRound(poker.Flop, table.PreviousValidPosition(table.NextValidPosition(table.Dealer)), table.NextValidPosition(table.Dealer), table.TableSize)
 	input.Betting(table)
-	if input.CheckExit() {
+	if restart && restartImp.CheckExit() {
 		wrapUp(*table)
 		return
 	}
 
 	table.TableCard[3] = input.GetTurnCard()
-	if input.CheckExit() {
+	if restart && restartImp.CheckExit() {
 		wrapUp(*table)
 		return
 	}
@@ -116,13 +129,13 @@ func NewGame(table *poker.Table, input inputDto.InputInterface) {
 
 	table.Round = poker.NewRound(poker.Turn, table.PreviousValidPosition(table.NextValidPosition(table.Dealer)), table.NextValidPosition(table.Dealer), table.TableSize)
 	input.Betting(table)
-	if input.CheckExit() {
+	if restart && restartImp.CheckExit() {
 		wrapUp(*table)
 		return
 	}
 
 	table.TableCard[4] = input.GetRiverCard()
-	if input.CheckExit() {
+	if restart && restartImp.CheckExit() {
 		wrapUp(*table)
 		return
 	}
@@ -130,7 +143,7 @@ func NewGame(table *poker.Table, input inputDto.InputInterface) {
 
 	table.Round = poker.NewRound(poker.River, table.PreviousValidPosition(table.NextValidPosition(table.Dealer)), table.NextValidPosition(table.Dealer), table.TableSize)
 	input.Betting(table)
-	if input.CheckExit() {
+	if restart && restartImp.CheckExit() {
 		wrapUp(*table)
 		return
 	}
@@ -139,7 +152,7 @@ func NewGame(table *poker.Table, input inputDto.InputInterface) {
 	return
 }
 
-func routine(ctx context.Context, wg *sync.WaitGroup, routineNum int, table *poker.Table, inputInterface inputDto.InputInterface, cancel context.CancelFunc) {
+func routine(ctx context.Context, wg *sync.WaitGroup, routineNum int, table *poker.Table, inputInterface inputDto.InputWithRestart, cancel context.CancelFunc) {
 	defer wg.Done()
 
 	for {
@@ -157,7 +170,7 @@ func routine(ctx context.Context, wg *sync.WaitGroup, routineNum int, table *pok
 }
 
 // 观察什么时候要开启新一轮
-func monitor(ctx context.Context, cancel context.CancelFunc, wg *sync.WaitGroup, input inputDto.InputInterface, table *poker.Table) {
+func monitor(ctx context.Context, cancel context.CancelFunc, wg *sync.WaitGroup, input inputDto.InputWithRestart, table *poker.Table) {
 	defer wg.Done()
 
 	ticker := time.NewTicker(1 * time.Second)

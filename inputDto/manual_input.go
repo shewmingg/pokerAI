@@ -115,16 +115,25 @@ func (mi *ManualInput) PlayerBetting(table *poker.Table, playerPos int) poker.Ac
 	return action
 }
 
-// 直接开始
-func (mi *ManualInput) WaitBettingTurn() bool {
-	return true
-}
-
-// 手动的没有这个讲究
-func (mi *ManualInput) RestartRound(table *poker.Table) bool {
-	return false
-}
-
-func (mi *ManualInput) TraceWhichIsActive(table *poker.Table) int {
-	return table.NextValidPosition(table.Round.FinalPosition)
+func (mi *ManualInput) Betting(table *poker.Table) {
+	fmt.Printf("%s started\n", table.Round.WhichRound)
+	if table.Round.CurActionPos == 0 {
+		genGptPrompt(table)
+	}
+	for {
+		action := mi.PlayerBetting(table, table.Round.CurActionPos)
+		fmt.Println(action)
+		action.Execute(table)
+		// 到最后一家了，结束本轮
+		if table.Round.CurActionPos == table.Round.FinalPosition {
+			table.ShowSituation()
+			fmt.Printf("%s finished\n", table.Round.WhichRound)
+			return
+		}
+		table.Round.CurActionPos = table.NextValidPosition(table.Round.CurActionPos)
+		// 到自己的时候就该gpt出马了
+		if table.Round.CurActionPos == 0 {
+			genGptPrompt(table)
+		}
+	}
 }

@@ -99,7 +99,7 @@ func (wpi *WePokerInput) Init() {
 	}
 	// 每个玩家出的筹码
 	wpi.ImagePos.Betting = []image.Rectangle{
-		screen.Relative2AbsoluteRectangle(630, 1358, 60, 29), // 我的下注
+		screen.Relative2AbsoluteRectangle(626, 1358, 60, 29), // 我的下注
 		screen.Relative2AbsoluteRectangle(336, 1041, 60, 27), // P1下注
 		screen.Relative2AbsoluteRectangle(336, 825, 60, 27),  // P2下注
 		screen.Relative2AbsoluteRectangle(336, 606, 60, 27),  // P3下注
@@ -195,29 +195,29 @@ func (wpi *WePokerInput) GetDealer() int {
 	}
 }
 func (wpi *WePokerInput) GetTurnCard() *poker.Card {
-	return wpi.GetCardWithRepeat(wpi.TableCardsArea[6], wpi.TableCardsArea[7], "turn")
+	return wpi.getCardWithRepeat(wpi.TableCardsArea[6], wpi.TableCardsArea[7], "turn")
 
 }
 func (wpi *WePokerInput) GetRiverCard() *poker.Card {
-	return wpi.GetCardWithRepeat(wpi.TableCardsArea[8], wpi.TableCardsArea[9], "river")
+	return wpi.getCardWithRepeat(wpi.TableCardsArea[8], wpi.TableCardsArea[9], "river")
 }
 
 func (wpi *WePokerInput) GetFlopCards() (cards []*poker.Card) {
 	return []*poker.Card{
-		wpi.GetCardWithRepeat(wpi.TableCardsArea[0], wpi.TableCardsArea[1], "flop1"),
-		wpi.GetCardWithRepeat(wpi.TableCardsArea[2], wpi.TableCardsArea[3], "flop2"),
-		wpi.GetCardWithRepeat(wpi.TableCardsArea[4], wpi.TableCardsArea[5], "flop3"),
+		wpi.getCardWithRepeat(wpi.TableCardsArea[0], wpi.TableCardsArea[1], "flop1"),
+		wpi.getCardWithRepeat(wpi.TableCardsArea[2], wpi.TableCardsArea[3], "flop2"),
+		wpi.getCardWithRepeat(wpi.TableCardsArea[4], wpi.TableCardsArea[5], "flop3"),
 	}
 }
 
 func (wpi *WePokerInput) GetSelfCard() (cards [2]*poker.Card) {
 	return [2]*poker.Card{
-		wpi.GetCardWithRepeat(wpi.ImagePos.MyCards[0], wpi.ImagePos.MyCards[1], "mycard1"),
-		wpi.GetCardWithRepeat(wpi.ImagePos.MyCards[2], wpi.ImagePos.MyCards[3], "mycard2"),
+		wpi.getCardWithRepeat(wpi.ImagePos.MyCards[0], wpi.ImagePos.MyCards[1], "mycard1"),
+		wpi.getCardWithRepeat(wpi.ImagePos.MyCards[2], wpi.ImagePos.MyCards[3], "mycard2"),
 	}
 }
 
-func (wpi *WePokerInput) GetCardWithRepeat(suitRec, rankRec image.Rectangle, identifier string) *poker.Card {
+func (wpi *WePokerInput) getCardWithRepeat(suitRec, rankRec image.Rectangle, identifier string) *poker.Card {
 	var suit, rank string
 	for suit == "" {
 		select {
